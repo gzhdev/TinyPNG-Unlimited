@@ -15,6 +15,11 @@ os.system('title=TinyPng无限制压缩图片')
 
 from tinypng_unlimited import KeyManager, TinyImg
 
+DEFAULT_TARGET_PATH = os.path.abspath("./output")
+
+if not os.path.exists(DEFAULT_TARGET_PATH):
+    os.makedirs(DEFAULT_TARGET_PATH)
+
 
 def init(proxy=None):
     logger.info('TinyPng正在初始化')
@@ -36,14 +41,14 @@ def init(proxy=None):
     logger.success('TinyPng初始化成功')
 
 
-def compress_error_files(file_list):
+def compress_error_files(file_list, new_dir_path=DEFAULT_TARGET_PATH):
     times = 0
     logger.warning('存在压缩失败图片({}):\n{}', len(file_list), file_list)
     while times < 5:
         times += 1
         logger.info('1s后对上述文件列表内文件进行压缩(第{}次)', times)
         time.sleep(1)
-        res = TinyImg.compress_from_file_list(file_list)
+        res = TinyImg.compress_from_file_list(file_list, new_dir_path)
         tqdm.write('')
         logger.debug('压缩报告基本信息:\n{}', json.dumps(res['basic'], ensure_ascii=False, indent=2))
         # 压缩失败文件不考虑输出日志到文件
@@ -65,7 +70,7 @@ def compress_error_files(file_list):
 
 
 def compress_cover(input_type: str, file_list: list = None, dir_path: str = None,
-                   proxy: str = None, log: bool = False):
+                   new_dir_path: str = DEFAULT_TARGET_PATH, proxy: str = None, log: bool = False):
     if input_type == 'dir':
         if not len(dir_path):
             return False
@@ -84,11 +89,11 @@ def compress_cover(input_type: str, file_list: list = None, dir_path: str = None
         if input_type == 'dir':
             logger.info('1s后开始对文件夹内图片进行压缩: {}', dir_path)
             time.sleep(1)
-            res = TinyImg.compress_from_dir(dir_path)
+            res = TinyImg.compress_from_dir(dir_path, new_dir_path)
         else:
             logger.info('1s后开始对图片列表进行压缩: {}', file_list)
             time.sleep(1)
-            res = TinyImg.compress_from_file_list(file_list)
+            res = TinyImg.compress_from_file_list(file_list, new_dir_path)
         tqdm.write('')
         logger.debug('压缩报告基本信息:\n{}', json.dumps(res['basic'], ensure_ascii=False, indent=2))
 

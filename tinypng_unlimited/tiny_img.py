@@ -47,11 +47,17 @@ class TinyImg:
         :param url: 图片下载链接
         :param timeout: 下载超时
         """
+
         file_name = os.path.basename(path)
+        # file_name = os.path.splitext(rfile_name)[0] + '.webp'
+        # new_path = os.path.join(os.path.split(path)[0], file_name)
         if not os.path.exists(cls.tmp_dir):
             os.mkdir(cls.tmp_dir)
         tmp_path = os.path.abspath(os.path.join(cls.tmp_dir, f'{file_name}_{round(time.time())}'))
-        res = cls._session.get(url, stream=True, timeout=timeout)
+        # res = cls._session.get(url, stream=True, timeout=timeout)
+        s: Session = tinify.get_client().session
+        res = s.post(url, json={"convert": {"type": "image/webp"}}, stream=True, timeout=timeout)
+        logger.info(f"下载文件状态码：{res.status_code}")
         file_size = int(res.headers.get('content-length', 0))
         with tqdm(file=sys.stdout, desc=f'[下载进度]: {file_name}', colour='red', ncols=120, leave=False,
                   ascii=' ▇', total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as bar:
@@ -184,7 +190,8 @@ class TinyImg:
                       colour='yellow', leave=False, ncols=120, position=thread_num) as bar:
                 future_list = []
                 for old_path in file_list:
-                    file_name = os.path.basename(old_path)
+                    rfile_name = os.path.basename(old_path)
+                    file_name = os.path.splitext(rfile_name)[0] + '.webp'
                     # 默认下覆盖原文件
                     new_path = os.path.abspath(os.path.join(new_dir, file_name)) if new_dir else old_path
                     future_list.append(pool.submit(cls.compress_from_file, old_path, new_path, True,
